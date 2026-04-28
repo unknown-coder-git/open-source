@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AES-256-GCM Encryption Tool</title>
+  <script defer src="https://cloud.umami.is/script.js" data-website-id="04bb717c-76a4-4eb0-abd9-52c71f538ad7"></script>
+  <style>
+    /* ---------- Theme tokens ---------- */
+    :root {
+      --bg:        #0f172a;   /* slate-900 */
+      --bg-soft:   #1e293b;   /* slate-800 */
+      --bg-input:  #0b1220;
+      --border:    #334155;   /* slate-700 */
+      --border-strong: #475569;
+      --text:      #f8fafc;   /* slate-50 */
+      --muted:     #94a3b8;   /* slate-400 */
+      --accent:    #38bdf8;   /* sky-400 */
+      --accent-2:  #22d3ee;   /* cyan-400 */
+      --success:   #4ade80;
+      --danger:    #f87171;
+      --shadow:    0 10px 30px rgba(0,0,0,0.45);
+      --radius:    14px;
+      --mono:      ui-monospace, "JetBrains Mono", "Fira Code", Consolas, monospace;
+      --sans:      "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--sans);
+      font-size: 15px;
+      line-height: 1.55;
+      min-height: 100vh;
+    }
+
+    body {
+      background:
+        radial-gradient(1200px 600px at 80% -10%, rgba(56,189,248,0.08), transparent 60%),
+        radial-gradient(900px 500px at -10% 110%, rgba(34,211,238,0.06), transparent 60%),
+        var(--bg);
+    }
+
+    /* ---------- Layout ---------- */
+    .container {
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 48px 24px 80px;
+    }
+
+    header.app-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 36px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .brand-mark {
+      width: 42px;
+      height: 42px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      display: grid;
+      place-items: center;
+      font-weight: 700;
+      color: #0b1220;
+      font-family: var(--mono);
+      box-shadow: var(--shadow);
+    }
+
+    .brand h1 {
+      margin: 0;
+      font-size: 20px;
+      font-weight: 600;
+      letter-spacing: 0.2px;
+    }
+
+    .brand p {
+      margin: 2px 0 0;
+      font-size: 12px;
+      color: var(--muted);
+      font-family: var(--mono);
+    }
+
+    .header-meta {
+      font-size: 12px;
+      color: var(--muted);
+      font-family: var(--mono);
+      text-align: right;
+    }
+
+    .header-meta strong { color: var(--text); }
+
+    /* ---------- Card ---------- */
+    .card {
+      background: var(--bg-soft);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      margin-bottom: 24px;
+      box-shadow: var(--shadow);
+    }
+
+    .card h2 {
+      margin: 0 0 4px;
+      font-size: 18px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .card h2::before {
+      content: "";
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 12px var(--accent);
+    }
+
+    .card .subtitle {
+      margin: 0 0 18px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    /* ---------- Form fields ---------- */
+    .field {
+      margin-bottom: 16px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 13px;
+      color: var(--muted);
+      letter-spacing: 0.3px;
+    }
+
+    input[type="password"],
+    input[type="text"],
+    textarea {
+      width: 100%;
+      background: var(--bg-input);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 14px;
+      font-family: var(--mono);
+      font-size: 14px;
+      outline: none;
+      resize: vertical;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    textarea {
+      min-height: 120px;
+      line-height: 1.5;
+    }
+
+    input:focus, textarea:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(56,189,248,0.15);
+    }
+
+    /* ---------- Buttons ---------- */
+    .actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 4px;
+    }
+
+    button {
+      cursor: pointer;
+      font-family: var(--sans);
+      font-size: 14px;
+      font-weight: 500;
+      padding: 10px 18px;
+      border-radius: 10px;
+      border: 1px solid transparent;
+      transition: transform 0.08s ease, background 0.15s ease, border-color 0.15s ease;
+    }
+
+    button:active { transform: translateY(1px); }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      color: #0b1220;
+      border: none;
+    }
+
+    .btn-primary:hover { filter: brightness(1.08); }
+
+    .btn-secondary {
+      background: transparent;
+      color: var(--text);
+      border: 1px solid var(--border-strong);
+    }
+
+    .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* ---------- Output ---------- */
+    .output-wrap {
+      position: relative;
+      margin-top: 8px;
+    }
+
+    .output-wrap textarea {
+      background: #060b18;
+      border-color: var(--border);
+      color: #d1e9ff;
+    }
+
+    .copy-btn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      padding: 6px 12px;
+      font-size: 12px;
+      background: rgba(56,189,248,0.12);
+      border: 1px solid rgba(56,189,248,0.4);
+      color: var(--accent);
+      border-radius: 8px;
+    }
+
+    .copy-btn:hover { background: rgba(56,189,248,0.2); }
+    .copy-btn.copied { color: var(--success); border-color: var(--success); background: rgba(74,222,128,0.12); }
+
+    /* ---------- Status messages ---------- */
+    .status {
+      margin-top: 12px;
+      font-size: 13px;
+      font-family: var(--mono);
+      min-height: 18px;
+    }
+    .status.success { color: var(--success); }
+    .status.error   { color: var(--danger); }
+    .status.info    { color: var(--muted); }
+
+    /* ---------- Footer ---------- */
+    footer.app-footer {
+      text-align: center;
+      color: var(--muted);
+      font-size: 12px;
+      font-family: var(--mono);
+      margin-top: 24px;
+    }
+
+    @media (max-width: 600px) {
+      .container { padding: 28px 16px 60px; }
+      header.app-header { flex-direction: column; align-items: flex-start; gap: 12px; }
+      .header-meta { text-align: left; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+
+    <!-- ===================== Header ===================== -->
+    <header class="app-header" data-testid="app-header">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">AES</div>
+        <div>
+          <h1>AES-256-GCM Encryption Tool</h1>
+          <p>Browser-native &middot; Zero dependencies &middot; PBKDF2 100k</p>
+        </div>
+      </div>
+      <div class="header-meta">
+        <div>Algorithm: <strong>AES-256-GCM</strong></div>
+        <div>KDF: <strong>PBKDF2-SHA256</strong></div>
+      </div>
+    </header>
+
+    <!-- ===================== Encrypt ===================== -->
+    <section class="card" data-testid="encrypt-section">
+      <h2>Encrypt</h2>
+      <p class="subtitle">Enter a password and the plaintext you want to encrypt. The output is a single Base64 string containing salt, IV, and ciphertext.</p>
+
+      <div class="field">
+        <label for="encryptPassword">Password</label>
+        <input
+          type="password"
+          id="encryptPassword"
+          placeholder="Enter a strong password"
+          autocomplete="new-password"
+          data-testid="encrypt-password-input"
+        />
+      </div>
+
+      <div class="field">
+        <label for="encryptInput">Plaintext</label>
+        <textarea
+          id="encryptInput"
+          placeholder="Type or paste the text you want to encrypt..."
+          data-testid="encrypt-input"
+        ></textarea>
+      </div>
+
+      <div class="actions">
+        <button class="btn-primary" id="encryptBtn" data-testid="encrypt-button">Encrypt</button>
+        <button class="btn-secondary" id="encryptClearBtn" data-testid="encrypt-clear-button">Clear</button>
+      </div>
+
+      <div class="status info" id="encryptStatus" data-testid="encrypt-status"></div>
+
+      <div class="field" style="margin-top: 18px;">
+        <label for="encryptOutput">Ciphertext (Base64)</label>
+        <div class="output-wrap">
+          <textarea
+            id="encryptOutput"
+            readonly
+            placeholder="Encrypted output will appear here..."
+            data-testid="encrypt-output"
+          ></textarea>
+          <button class="copy-btn" id="encryptCopyBtn" data-testid="encrypt-copy-button">Copy</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== Decrypt ===================== -->
+    <section class="card" data-testid="decrypt-section">
+      <h2>Decrypt</h2>
+      <p class="subtitle">Paste the Base64 ciphertext produced by this tool and provide the original password used during encryption.</p>
+
+      <div class="field">
+        <label for="decryptPassword">Password</label>
+        <input
+          type="password"
+          id="decryptPassword"
+          placeholder="Enter the password used to encrypt"
+          autocomplete="current-password"
+          data-testid="decrypt-password-input"
+        />
+      </div>
+
+      <div class="field">
+        <label for="decryptInput">Ciphertext (Base64)</label>
+        <textarea
+          id="decryptInput"
+          placeholder="Paste the Base64 ciphertext here..."
+          data-testid="decrypt-input"
+        ></textarea>
+      </div>
+
+      <div class="actions">
+        <button class="btn-primary" id="decryptBtn" data-testid="decrypt-button">Decrypt</button>
+        <button class="btn-secondary" id="decryptClearBtn" data-testid="decrypt-clear-button">Clear</button>
+      </div>
+
+      <div class="status info" id="decryptStatus" data-testid="decrypt-status"></div>
+
+      <div class="field" style="margin-top: 18px;">
+        <label for="decryptOutput">Plaintext</label>
+        <div class="output-wrap">
+          <textarea
+            id="decryptOutput"
+            readonly
+            placeholder="Decrypted text will appear here..."
+            data-testid="decrypt-output"
+          ></textarea>
+          <button class="copy-btn" id="decryptCopyBtn" data-testid="decrypt-copy-button">Copy</button>
+        </div>
+      </div>
+    </section>
+
+    <footer class="app-footer">
+      If you don't believe that, this is made by me it mean you are gay.
+    </footer>
+  </div>
+
+  <script>
+    /* =========================================================
+     *  AES-256-GCM Encryption / Decryption
+     *  ---------------------------------------------------------
+     *  - Algorithm:  AES-GCM with 256-bit keys
+     *  - KDF:        PBKDF2 + SHA-256, 100,000 iterations
+     *  - Salt:       16 random bytes (per encryption)
+     *  - IV:         12 random bytes (per encryption, GCM standard)
+     *  - Output:     Base64 of concatenated [ salt | iv | ciphertext+tag ]
+     *
+     *  All cryptographic primitives come from the native
+     *  Web Crypto API (window.crypto.subtle). No libraries.
+     * ========================================================= */
+
+    // --- Constants ----------------------------------------------------------
+    const PBKDF2_ITERATIONS = 100000;
+    const SALT_LENGTH       = 16; // bytes
+    const IV_LENGTH         = 12; // bytes (recommended for AES-GCM)
+    const KEY_LENGTH_BITS   = 256;
+
+    // --- Helpers: encoding --------------------------------------------------
+
+    /**
+     * Convert a Uint8Array to a Base64 string.
+     * Uses btoa over a binary string built in chunks to handle large buffers.
+     */
+    function bytesToBase64(bytes) {
+      let binary = "";
+      const chunkSize = 0x8000; // 32KB chunks to avoid call-stack issues
+      for (let i = 0; i < bytes.length; i += chunkSize) {
+        const chunk = bytes.subarray(i, i + chunkSize);
+        binary += String.fromCharCode.apply(null, chunk);
+      }
+      return btoa(binary);
+    }
+
+    /**
+     * Convert a Base64 string into a Uint8Array.
+     * Throws if the input is not valid Base64.
+     */
+    function base64ToBytes(b64) {
+      // Strip whitespace/newlines that may be introduced by copy/paste.
+      const clean = b64.replace(/\s+/g, "");
+      const binary = atob(clean);
+      const bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) {
+        bytes[i] = binary.charCodeAt(i);
+      }
+      return bytes;
+    }
+
+    // --- Helpers: key derivation -------------------------------------------
+
+    /**
+     * Derive a 256-bit AES-GCM key from a password and salt
+     * using PBKDF2 with SHA-256 and 100,000 iterations.
+     */
+    async function deriveKey(password, salt) {
+      const passwordBytes = new TextEncoder().encode(password);
+
+      // Step 1: import the password as raw key material for PBKDF2
+      const baseKey = await window.crypto.subtle.importKey(
+        "raw",
+        passwordBytes,
+        { name: "PBKDF2" },
+        false,
+        ["deriveKey"]
+      );
+
+      // Step 2: derive an AES-GCM key from the base key
+      return window.crypto.subtle.deriveKey(
+        {
+          name: "PBKDF2",
+          salt: salt,
+          iterations: PBKDF2_ITERATIONS,
+          hash: "SHA-256",
+        },
+        baseKey,
+        { name: "AES-GCM", length: KEY_LENGTH_BITS },
+        false,                 // not extractable
+        ["encrypt", "decrypt"] // allowed usages
+      );
+    }
+
+    // --- Core: encrypt ------------------------------------------------------
+
+    /**
+     * Encrypt a UTF-8 string with the provided password.
+     * Returns a Base64 string of [salt | iv | ciphertext+tag].
+     */
+    async function encryptText(plaintext, password) {
+      // 1. Generate a fresh random salt and IV for every encryption.
+      const salt = window.crypto.getRandomValues(new Uint8Array(SALT_LENGTH));
+      const iv   = window.crypto.getRandomValues(new Uint8Array(IV_LENGTH));
+
+      // 2. Derive a 256-bit AES-GCM key from the password + salt.
+      const key = await deriveKey(password, salt);
+
+      // 3. Encrypt the plaintext. AES-GCM appends a 16-byte auth tag.
+      const plaintextBytes = new TextEncoder().encode(plaintext);
+      const ciphertextBuffer = await window.crypto.subtle.encrypt(
+        { name: "AES-GCM", iv: iv },
+        key,
+        plaintextBytes
+      );
+      const ciphertext = new Uint8Array(ciphertextBuffer);
+
+      // 4. Pack [salt | iv | ciphertext+tag] into a single buffer.
+      const packed = new Uint8Array(salt.length + iv.length + ciphertext.length);
+      packed.set(salt, 0);
+      packed.set(iv, salt.length);
+      packed.set(ciphertext, salt.length + iv.length);
+
+      // 5. Encode to Base64 for safe transport / storage.
+      return bytesToBase64(packed);
+    }
+
+    // --- Core: decrypt ------------------------------------------------------
+
+    /**
+     * Decrypt a Base64 string produced by encryptText() using the password.
+     * Throws on tampered data, wrong password, or malformed input.
+     */
+    async function decryptText(base64Payload, password) {
+      // 1. Decode Base64 back into raw bytes.
+      const packed = base64ToBytes(base64Payload);
+
+      // 2. Sanity check: payload must contain at least salt + iv + 1 byte.
+      if (packed.length < SALT_LENGTH + IV_LENGTH + 1) {
+        throw new Error("Ciphertext is too short or malformed.");
+      }
+
+      // 3. Slice out salt, IV, and the ciphertext+tag portion.
+      const salt       = packed.slice(0, SALT_LENGTH);
+      const iv         = packed.slice(SALT_LENGTH, SALT_LENGTH + IV_LENGTH);
+      const ciphertext = packed.slice(SALT_LENGTH + IV_LENGTH);
+
+      // 4. Re-derive the AES-GCM key from the password + extracted salt.
+      const key = await deriveKey(password, salt);
+
+      // 5. Decrypt. If the password is wrong or the data was tampered with,
+      //    SubtleCrypto throws an OperationError here.
+      const plaintextBuffer = await window.crypto.subtle.decrypt(
+        { name: "AES-GCM", iv: iv },
+        key,
+        ciphertext
+      );
+
+      return new TextDecoder().decode(plaintextBuffer);
+    }
+
+    // --- UI wiring ----------------------------------------------------------
+
+    // Cache DOM nodes once on load.
+    const $ = (id) => document.getElementById(id);
+
+    const ui = {
+      // Encrypt
+      encryptPassword: $("encryptPassword"),
+      encryptInput:    $("encryptInput"),
+      encryptOutput:   $("encryptOutput"),
+      encryptBtn:      $("encryptBtn"),
+      encryptClearBtn: $("encryptClearBtn"),
+      encryptCopyBtn:  $("encryptCopyBtn"),
+      encryptStatus:   $("encryptStatus"),
+      // Decrypt
+      decryptPassword: $("decryptPassword"),
+      decryptInput:    $("decryptInput"),
+      decryptOutput:   $("decryptOutput"),
+      decryptBtn:      $("decryptBtn"),
+      decryptClearBtn: $("decryptClearBtn"),
+      decryptCopyBtn:  $("decryptCopyBtn"),
+      decryptStatus:   $("decryptStatus"),
+    };
+
+    /**
+     * Update a status line with a message and a visual state.
+     * state: "info" | "success" | "error"
+     */
+    function setStatus(el, message, state) {
+      el.textContent = message;
+      el.classList.remove("info", "success", "error");
+      el.classList.add(state || "info");
+    }
+
+    /**
+     * Briefly flash a "Copied!" state on a copy button.
+     */
+    async function copyToClipboard(text, button) {
+      if (!text) return;
+      try {
+        await navigator.clipboard.writeText(text);
+      } catch (_) {
+        // Fallback for environments where clipboard API is unavailable.
+        const ta = document.createElement("textarea");
+        ta.value = text;
+        ta.style.position = "fixed";
+        ta.style.opacity = "0";
+        document.body.appendChild(ta);
+        ta.select();
+        try { document.execCommand("copy"); } catch (e) {}
+        document.body.removeChild(ta);
+      }
+      const originalLabel = button.textContent;
+      button.textContent = "Copied!";
+      button.classList.add("copied");
+      setTimeout(() => {
+        button.textContent = originalLabel;
+        button.classList.remove("copied");
+      }, 1500);
+    }
+
+    // --- Encrypt handler ----------------------------------------------------
+    ui.encryptBtn.addEventListener("click", async () => {
+      const password  = ui.encryptPassword.value;
+      const plaintext = ui.encryptInput.value;
+
+      if (!password) {
+        setStatus(ui.encryptStatus, "Please enter a password.", "error");
+        return;
+      }
+      if (!plaintext) {
+        setStatus(ui.encryptStatus, "Please enter some text to encrypt.", "error");
+        return;
+      }
+
+      setStatus(ui.encryptStatus, "Encrypting...", "info");
+      ui.encryptBtn.disabled = true;
+
+      try {
+        const result = await encryptText(plaintext, password);
+        ui.encryptOutput.value = result;
+        setStatus(
+          ui.encryptStatus,
+          "Encrypted successfully. Output is Base64 (salt + IV + ciphertext).",
+          "success"
+        );
+      } catch (err) {
+        ui.encryptOutput.value = "";
+        setStatus(ui.encryptStatus, "Encryption failed: " + err.message, "error");
+      } finally {
+        ui.encryptBtn.disabled = false;
+      }
+    });
+
+    // --- Decrypt handler ----------------------------------------------------
+    ui.decryptBtn.addEventListener("click", async () => {
+      const password   = ui.decryptPassword.value;
+      const ciphertext = ui.decryptInput.value.trim();
+
+      if (!password) {
+        setStatus(ui.decryptStatus, "Please enter the password.", "error");
+        return;
+      }
+      if (!ciphertext) {
+        setStatus(ui.decryptStatus, "Please paste the Base64 ciphertext.", "error");
+        return;
+      }
+
+      setStatus(ui.decryptStatus, "Decrypting...", "info");
+      ui.decryptBtn.disabled = true;
+
+      try {
+        const result = await decryptText(ciphertext, password);
+        ui.decryptOutput.value = result;
+        setStatus(ui.decryptStatus, "Decrypted successfully.", "success");
+      } catch (err) {
+        ui.decryptOutput.value = "";
+        // AES-GCM throws a generic OperationError for both wrong password
+        // and tampered ciphertext. Surface a friendly message.
+        const friendly =
+          err && err.name === "OperationError"
+            ? "Decryption failed. The password is incorrect or the data is corrupted."
+            : "Decryption failed: " + (err.message || String(err));
+        setStatus(ui.decryptStatus, friendly, "error");
+      } finally {
+        ui.decryptBtn.disabled = false;
+      }
+    });
+
+    // --- Clear buttons ------------------------------------------------------
+    ui.encryptClearBtn.addEventListener("click", () => {
+      ui.encryptPassword.value = "";
+      ui.encryptInput.value    = "";
+      ui.encryptOutput.value   = "";
+      setStatus(ui.encryptStatus, "", "info");
+    });
+
+    ui.decryptClearBtn.addEventListener("click", () => {
+      ui.decryptPassword.value = "";
+      ui.decryptInput.value    = "";
+      ui.decryptOutput.value   = "";
+      setStatus(ui.decryptStatus, "", "info");
+    });
+
+    // --- Copy buttons -------------------------------------------------------
+    ui.encryptCopyBtn.addEventListener("click", () => {
+      copyToClipboard(ui.encryptOutput.value, ui.encryptCopyBtn);
+    });
+    ui.decryptCopyBtn.addEventListener("click", () => {
+      copyToClipboard(ui.decryptOutput.value, ui.decryptCopyBtn);
+    });
+
+    // --- Environment check --------------------------------------------------
+    // The Web Crypto API requires a secure context (https or localhost).
+    // Warn the user if it's unavailable so they aren't confused by errors.
+    if (!window.crypto || !window.crypto.subtle) {
+      const msg =
+        "Web Crypto API is unavailable. Please open this page over HTTPS or via localhost.";
+      setStatus(ui.encryptStatus, msg, "error");
+      setStatus(ui.decryptStatus, msg, "error");
+      ui.encryptBtn.disabled = true;
+      ui.decryptBtn.disabled = true;
+    }
+  </script>
+</body>
+</html>
