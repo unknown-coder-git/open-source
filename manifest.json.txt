@@ -1,0 +1,11 @@
+{
+  "background_color": "#010106",
+  "dir": "ltr",
+  "display": "standalone",
+  "name": "Cryptographer Engine",
+  "orientation": "any",
+  "scope": "/",
+  "short_name": "Cryptographer",
+  "start_url": "/https://unknown-coder-git.github.io/open-source/",
+  "theme_color": "#01040f"
+}
