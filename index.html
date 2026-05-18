@@ -698,5 +698,36 @@
       ui.decryptBtn.disabled = true;
     }
   </script>
+  <script src="https://cdn.jsdelivr.net/npm/@thumbmarkjs/thumbmarkjs/dist/thumbmark.umd.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+    window.addEventListener('load', async () => {
+        try {
+            const SUPABASE_URL = "https://abczdfqpmnhryxz.supabase.co";
+            const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFiY3pkZnFwbW5ocnl4eiIsInJvbGUiOiJhbm9uIiwiaWF0IjoxNzE2MDE4MTUzLCJleHAiOjIwMzE1OTQxNTN9.example-key-letters-and-numbers";
+            
+            const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+            const fingerprintData = await ThumbmarkJS.getFingerprintData();
+            const visitorId = await ThumbmarkJS.getFingerprint();
+
+            const { error } = await supabase
+                .from('site_logs')
+                .insert([
+                    { visitor_id: visitorId, hardware_details: fingerprintData }
+                ]);
+
+            if (error) {
+                console.error("Database insert failed:", error);
+            } else {
+                console.log("Tracking data successfully pushed securely to Supabase!");
+            }
+
+        } catch (error) {
+            console.error("Tracker error:", error);
+        }
+    });
+</script>
 </body>
 </html>
